@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carrusel Circular - Encanto Casero</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Fraunces:ital,wght@0,400;1,400&display=swap');
+
+    :root {
+      --bg-color: #f7f3e8; /* Default background */
+      --text-color: #333;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      overflow: hidden; /* Prevent scrolling */
+      transition: background-color 0.8s ease;
+    }
+
+    .carousel-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Header text (Title and Description) */
+    .header-content {
+      margin-top: 10vh;
+      text-align: center;
+      z-index: 10;
+      min-height: 150px;
+    }
+
+    .header-content h1 {
+      font-family: 'Fraunces', serif;
+      font-size: 3rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      transition: opacity 0.4s ease;
+    }
+
+    .header-content p {
+      font-size: 1.1rem;
+      max-width: 400px;
+      margin: 0 auto;
+      font-weight: 300;
+      transition: opacity 0.4s ease;
+    }
+
+    /* Navigation Arrows */
+    .nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      font-size: 3rem;
+      cursor: pointer;
+      color: var(--text-color);
+      z-index: 20;
+      transition: transform 0.2s;
+    }
+
+    .nav-arrow:hover {
+      transform: translateY(-50%) scale(1.2);
+    }
+
+    .nav-prev { left: 5vw; }
+    .nav-next { right: 5vw; }
+
+    /* The Main Wheel Container positioned at the bottom */
+    .wheel-wrapper {
+      position: absolute;
+      bottom: -30vw; /* Push half of it down */
+      left: 50%;
+      transform: translateX(-50%);
+      width: 70vw;
+      height: 70vw;
+      max-width: 900px;
+      max-height: 900px;
+      z-index: 5;
+    }
+
+    /* The Rotating Ring (holds texts and dots) */
+    .rotating-ring {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px dashed rgba(0,0,0,0.1);
+      transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    /* Ring Items (The dots and labels) */
+    .ring-item {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .ring-item-content {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 150px;
+    }
+
+    .ring-item .dot {
+      width: 12px;
+      height: 12px;
+      background-color: var(--text-color);
+      border-radius: 50%;
+      margin-bottom: 10px;
+      transition: transform 0.3s;
+    }
+
+    .ring-item .label {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 500;
+      font-size: 1rem;
+      white-space: nowrap;
+      transition: font-size 0.3s, font-weight 0.3s;
+    }
+
+    /* The Active item style */
+    .ring-item.active .dot {
+      transform: scale(1.5);
+    }
+    
+    .ring-item.active .label {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    /* The Central Image */
+    .central-image-container {
+      position: absolute;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 80%;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .central-image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    .central-image-container img.active {
+      opacity: 1;
+    }
+    
+    /* Decorative floating elements */
+    .floating-deco {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      opacity: 0;
+      transition: opacity 0.5s ease, transform 0.8s ease;
+      z-index: 1;
+    }
+    
+    .floating-deco.active {
+      opacity: 0.8;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="carousel-container">
+    <div class="header-content">
+      <h1 id="titleText">Cheesecake</h1>
+      <p id="descText">Cremoso, fresco y delicioso con una base crujiente y cobertura frutal</p>
+    </div>
+
+    <button class="nav-arrow nav-prev" onclick="moveCarousel(-1)">&#10094;</button>
+    <button class="nav-arrow nav-next" onclick="moveCarousel(1)">&#10095;</button>
+
+    <div class="wheel-wrapper">
+      <div class="rotating-ring" id="ring">
+        <!-- JS will populate the items here -->
+      </div>
+
+      <div class="central-image-container" id="imageRing">
+        <!-- JS will populate images here -->
+      </div>
+    </div>
+    
+    <!-- Floating decos -->
+    <img id="deco1" class="floating-deco" style="top: 20%; left: 10%;" src="">
+    <img id="deco2" class="floating-deco" style="top: 30%; right: 10%;" src="">
+  </div>
+
+  <script>
+    const products = [
+      {
+        name: "Selva Negra",
+        desc: "Bizcocho de chocolate, crema suave y cerezas en una combinación clásica.",
+        image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+        bgColor: "#1a1614",
+        textColor: "#fff",
+        deco: ["https://cdn-icons-png.flaticon.com/512/1201/1201103.png", "https://cdn-icons-png.flaticon.com/512/6122/6122558.png"] // Cherry / Chocolate
+      },
+      {
+        name: "Mil hojas",
+        desc: "Capas finas y crujientes con abundante manjar, un clásico dulce y elegante.",
+        image: "https://images.unsplash.com/photo-1621303837174-89787a7d4729?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+        bgColor: "#f3e1d1",
+        textColor: "#4a3320",
+        deco: ["https://cdn-icons-png.flaticon.com/512/680/680956.png", "https://cdn-icons-png.flaticon.com/512/3014/3014529.png"] // Strawberry / Caramel
+      },
+      {
+        name: "Cheesecake",
+        desc: "Cremoso, fresco y delicioso con una base crujiente y cobertura frutal.",
+        image: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+        bgColor: "#f7f3e8",
+        textColor: "#333",
+        deco: ["https://cdn-icons-png.flaticon.com/512/1155/1155255.png", "https://cdn-icons-png.flaticon.com/512/4397/4397022.png"] // Passion fruit / Lemon
+      },
+      {
+        name: "Tiramisú",
+        desc: "Postre italiano suave y cremoso, con café, cacao y un sabor intenso.",
+        image: "https://images.unsplash.com/photo-1571115177098-24ec42ed204d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+        bgColor: "#2a221f",
+        textColor: "#f2e4d8",
+        deco: ["https://cdn-icons-png.flaticon.com/512/1047/1047493.png", "https://cdn-icons-png.flaticon.com/512/2921/2921822.png"] // Coffee bean / Cocoa
+      },
+      {
+        name: "Tres Leches",
+        desc: "Bizcocho húmedo y esponjoso, bañado en tres leches, cubierto con crema suave.",
+        image: "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+        bgColor: "#fffdf5",
+        textColor: "#5e4b3c",
+        deco: ["https://cdn-icons-png.flaticon.com/512/1147/1147814.png", "https://cdn-icons-png.flaticon.com/512/1201/1201111.png"] // Kiwi / Strawberry
+      }
+    ];
+
+    let currentIndex = 2; // Start with Cheesecake (middle item)
+    const angleStep = 45; // Degrees between each item
+
+    const ringEl = document.getElementById('ring');
+    const imageRingEl = document.getElementById('imageRing');
+    const titleText = document.getElementById('titleText');
+    const descText = document.getElementById('descText');
+    const root = document.documentElement;
+
+    function init() {
+      products.forEach((prod, index) => {
+        // Create Ring Item
+        const item = document.createElement('div');
+        item.className = 'ring-item';
+        // Position them along the circle. Index 2 is top (0 deg). 
+        // So index 0 is -90deg, 1 is -45deg, 2 is 0deg, 3 is 45deg, 4 is 90deg
+        const offset = (index - 2) * angleStep; 
+        item.style.transform = `rotate(${offset}deg)`;
+        item.innerHTML = `
+          <div class="ring-item-content">
+            <div class="dot"></div>
+            <div class="label">${prod.name}</div>
+          </div>
+        `;
+        ringEl.appendChild(item);
+
+        // Create Central Image
+        const img = document.createElement('img');
+        img.src = prod.image;
+        imageRingEl.appendChild(img);
+      });
+      
+      updateView();
+    }
+
+    function moveCarousel(direction) {
+      currentIndex += direction;
+      // Wrap around
+      if (currentIndex < 0) currentIndex = products.length - 1;
+      if (currentIndex >= products.length) currentIndex = 0;
+      
+      updateView();
+    }
+
+    function updateView() {
+      const currentProd = products[currentIndex];
+      
+      // Update Texts with fade effect
+      titleText.style.opacity = 0;
+      descText.style.opacity = 0;
+      setTimeout(() => {
+        titleText.textContent = currentProd.name;
+        descText.textContent = currentProd.desc;
+        titleText.style.opacity = 1;
+        descText.style.opacity = 1;
+      }, 400);
+
+      // Update Colors
+      root.style.setProperty('--bg-color', currentProd.bgColor);
+      root.style.setProperty('--text-color', currentProd.textColor);
+
+      // Rotate the rings
+      // We want currentIndex to be at the top (0 deg)
+      // Since it originally started with index 2 at 0deg, we calculate the rotation
+      const rotation = (2 - currentIndex) * angleStep;
+      ringEl.style.transform = `rotate(${rotation}deg)`;
+      
+      // Also rotate the central image container for a nice spinning effect
+      imageRingEl.style.transform = `rotate(${rotation}deg)`;
+
+      // Update Active Classes for Dots/Labels and Images
+      const ringItems = ringEl.children;
+      const images = imageRingEl.children;
+      
+      for(let i=0; i < products.length; i++) {
+        // Items
+        if(i === currentIndex) {
+          ringItems[i].classList.add('active');
+          images[i].classList.add('active');
+          // El elemento activo resalta
+        } else {
+          ringItems[i].classList.remove('active');
+          images[i].classList.remove('active');
+        }
+        
+        // Counter-rotate the image inside the rotated container so the image stays upright
+        // but just spins in place.
+        images[i].style.transform = `rotate(${-rotation}deg)`;
+      }
+      
+      // Update Decos
+      const deco1 = document.getElementById('deco1');
+      const deco2 = document.getElementById('deco2');
+      deco1.classList.remove('active');
+      deco2.classList.remove('active');
+      setTimeout(() => {
+        deco1.src = currentProd.deco[0];
+        deco2.src = currentProd.deco[1];
+        
+        // Random slight movement for decos
+        deco1.style.transform = `translateY(${Math.random() * 20 - 10}px) rotate(${Math.random() * 45}deg)`;
+        deco2.style.transform = `translateY(${Math.random() * 20 - 10}px) rotate(${Math.random() * 45}deg)`;
+        
+        deco1.classList.add('active');
+        deco2.classList.add('active');
+      }, 400);
+    }
+
+    init();
+  </script>
+</body>
+</html>
